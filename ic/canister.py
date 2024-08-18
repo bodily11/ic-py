@@ -2,6 +2,8 @@ from .parser.DIDEmitter import *;
 from antlr4 import *
 from antlr4.InputStream import InputStream
 from .candid import encode, FuncClass
+from .certificate import lookup
+from .principal import Principal
 
 class Canister:
     def __init__(self, agent, canister_id, candid=None):
@@ -13,9 +15,15 @@ class Canister:
             candid = agent.query_raw(canister_id, "__get_candid_interface_tmp_hack", encode([]))
             self.candid = candid[0]['value']
         if 'has no query method' in candid:
-            print(candid)
-            print("Please provide candid description")
-            raise BaseException("canister " + str(canister_id) + " has no __get_candid_interface_tmp_hack method.")
+            path = ["canister".encode(),Principal.from_str(canister_id).bytes,"metadata".encode(),"candid:service".encode()]
+            raw_cert = agent.read_state_raw(canister_id,[path])
+            candid = lookup(path, raw_cert)
+            if candid:
+                self.candid = candid
+            else:
+                print(candid)
+                print("Please provide candid description")
+                raise BaseException("canister " + str(canister_id) + " has no __get_candid_interface_tmp_hack method.")
         
         input_stream = InputStream(self.candid)
         lexer = DIDLexer(input_stream)
