@@ -12,18 +12,19 @@ class Canister:
         if candid:
             self.candid = candid
         else:
-            candid = agent.query_raw(canister_id, "__get_candid_interface_tmp_hack", encode([]))
-            self.candid = candid[0]['value']
-        if 'has no query method' in candid:
-            path = ["canister".encode(),Principal.from_str(canister_id).bytes,"metadata".encode(),"candid:service".encode()]
-            raw_cert = agent.read_state_raw(canister_id,[path])
-            candid = lookup(path, raw_cert)
-            if candid:
-                self.candid = candid
-            else:
-                print(candid)
-                print("Please provide candid description")
-                raise BaseException("canister " + str(canister_id) + " has no __get_candid_interface_tmp_hack method.")
+            try:
+                candid = agent.query_raw(canister_id, "__get_candid_interface_tmp_hack", encode([]))
+                self.candid = candid[0]['value']
+            except:
+                path = ["canister".encode(),Principal.from_str(canister_id).bytes,"metadata".encode(),"candid:service".encode()]
+                raw_cert = agent.read_state_raw(canister_id,[path])
+                candid = lookup(path, raw_cert)
+                if candid:
+                    self.candid = candid
+                else:
+                    print(candid)
+                    print("Please provide candid description")
+                    raise BaseException("canister " + str(canister_id) + " has no __get_candid_interface_tmp_hack method.")
         
         input_stream = InputStream(self.candid)
         lexer = DIDLexer(input_stream)
