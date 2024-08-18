@@ -18,7 +18,7 @@ class Canister:
             except:
                 path = ["canister".encode(),Principal.from_str(canister_id).bytes,"metadata".encode(),"candid:service".encode()]
                 raw_cert = agent.read_state_raw(canister_id,[path])
-                candid = lookup(path, raw_cert)
+                candid = lookup(path, raw_cert).decode()
                 if candid:
                     self.candid = candid
                 else:
