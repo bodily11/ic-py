@@ -14,20 +14,6 @@ class Canister:
         else:
             self.candid = self._fetch_candid()
 
-    def _fetch_candid(self):
-        try:
-            candid = self.agent.query_raw(self.canister_id, "__get_candid_interface_tmp_hack", encode([]))
-            return candid[0]['value']
-        except Exception as e:
-            path = [b"canister", Principal.from_str(self.canister_id).bytes, b"metadata", b"candid:service"]
-            raw_cert = self.agent.read_state_raw(self.canister_id, [path])
-            candid = lookup(path, raw_cert).decode()
-            if candid:
-                return candid
-            else:
-                print("Candid description not found.")
-                raise ValueError(f"Canister {self.canister_id} has no candid interface available.") from e
-
         input_stream = InputStream(self.candid)
         lexer = DIDLexer(input_stream)
         token_stream = CommonTokenStream(lexer)
@@ -45,6 +31,20 @@ class Canister:
             anno = None if len(method.annotations) == 0 else method.annotations[0]
             setattr(self, name, CaniterMethod(agent, canister_id, name, method.argTypes, method.retTypes, anno))
             setattr(self, name + '_async', CaniterMethodAsync(agent, canister_id, name, method.argTypes, method.retTypes, anno))
+    
+    def _fetch_candid(self):
+        try:
+            candid = self.agent.query_raw(self.canister_id, "__get_candid_interface_tmp_hack", encode([]))
+            return candid[0]['value']
+        except Exception as e:
+            path = [b"canister", Principal.from_str(self.canister_id).bytes, b"metadata", b"candid:service"]
+            raw_cert = self.agent.read_state_raw(self.canister_id, [path])
+            candid = lookup(path, raw_cert).decode()
+            if candid:
+                return candid
+            else:
+                print("Candid description not found.")
+                raise ValueError(f"Canister {self.canister_id} has no candid interface available.") from e
 
 class CaniterMethod:
     def __init__(self, agent, canister_id, name, args, rets, anno = None):
